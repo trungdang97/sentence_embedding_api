@@ -1,0 +1,133 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Dịch vụ hỗ trợ tìm kiếm theo ngữ nghĩa</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <!-- Popper JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script src="interface.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css">
+    <style>
+        * {
+            font-size: 1.2rem;
+        }
+
+        .px-15 {
+            padding-left: 15px !important;
+            padding-right: 15px !important;
+        }
+
+        .body-image,
+        .body-video {
+            text-align: center;
+        }
+
+        .overlay {
+            background: #e9e9e9;
+            display: none;
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            opacity: 0.5;
+        }
+
+        .h-70 {
+            height: 70%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class='container-fluid'>
+        <div class='row'>
+            <div class='col-sm-12 text-center'>
+                <h2>Dịch vụ hỗ trợ tìm kiếm theo ngữ nghĩa</h2>
+            </div>
+        </div>
+        <div class='row'>
+            <div class="form-group col-sm-12">
+                <input type="text" class="form-control" id="Query" placeholder="Nhập chuỗi tìm kiếm tại đây...">
+            </div>
+            <div class="form-group col-sm-4">
+                <div class="form-group">
+                    <select class="form-control" id="Size">
+                        <option value=5>Top 5 kết quả</option>
+                        <option selected value=10>Top 10 kết quả</option>
+                        <option value=15>Top 15 kết quả</option>
+                        <option value=20>Top 20 kết quả</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-sm-4">
+                <div class="form-group">
+                    <select class="form-control" id='Categories'>
+                        <option selected value=''>Tất cả loại tin</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-sm-4">
+                <button class='btn btn-primary' style="width: 100%;" type="button" onclick="STS_Search()">Tìm
+                    kiếm</button>
+            </div>
+        </div>
+
+        <!-- RESULTS -->
+        <hr />
+        <div class='row h-70'>
+            <div class='col-sm-12 h-100'>
+                <div class='col-sm-12 h-100 d-flex justify-content-center align-items-center' id="es_logo" hidden>
+                    <img src='https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Elasticsearch_logo.svg/1280px-Elasticsearch_logo.svg.png'
+                        width="60%">
+                </div>
+                <div class="accordion" id="Results">
+                    <!-- <div class="card">
+                        <div class="card-header py-0">
+                            <div class="mb-0">
+                                <div class='row'>
+                                    <div class='col-sm-1 border-right'>#1</div>
+                                    <div class='col-sm-10'>Hà nội ngày đẹp</div>
+                                    <div class='col-sm-1 d-flex align-items-center justify-content-center'>
+                                        <a class="btn btn-link" data-toggle="collapse" data-target="#collapseID"
+                                            aria-expanded="false" aria-controls="collapseID">
+                                            <i class="fas fa-chevron-down"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="collapseID" class="collapse" data-parent="#Results">
+                            <div class="card-body">
+                                Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry
+                                richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor
+                                brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor,
+                                sunt aliqua put a bird on it squid single-origin coffee nulla assumenda
+                                shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson
+                                cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo.
+                                Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt
+                                you probably haven't heard of them accusamus labore sustainable VHS.
+                            </div>
+                        </div>
+                    </div> -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="overlay justify-content-center align-items-center">
+        <div id="loading-img">
+            <img src='https://lh3.googleusercontent.com/proxy/ZOqi-UQhjDFqQkBnfW9nRNs-nUWHdFJNCeO1yg-odqqetvlY5GydmBjcxA-iw_xAWhccgEKqZYaPXTIfH51KwznxAP1oLXBg=s0-d'>
+        </div>
+    </div>
+</body>
+
+</html>
