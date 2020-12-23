@@ -177,5 +177,20 @@ class ES_Repository:
                 }
             }
         }
+
+        if query_vector == None or query_vector == '':
+            body = {
+                "size": size,
+                "query": {
+                    "function_score": {
+                        "functions": [{
+                            "random_score": {
+                                "seed": "1518707649"
+                            }
+                        }]
+                    }
+                }
+            }
+
         response = self.client.search(body=body, index='news')
         return response

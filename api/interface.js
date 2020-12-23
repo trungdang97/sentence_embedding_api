@@ -2,7 +2,7 @@ threshold = 0.0
 
 function GetNewsCategory() {
     $.ajax({
-        url: "http://localhost:5000/api/v1/newscategory",
+        url: "http://trungddso.ddns.net:5000/api/v1/newscategory",
         dataType: 'json',
         success: function (tuples) {
             tuples.forEach(element => {
@@ -29,7 +29,7 @@ function STS_Search() {
     params += '&newscategoryid=' + newscategoryid;
     setTimeout(() => {
         $.ajax({
-            url: "http://localhost:5000/api/v1/news/search/sts" + params,
+            url: "http://trungddso.ddns.net:5000/api/v1/news/search/sts" + params,
             dataType: 'json',
             success: function (news) {
                 count = 1

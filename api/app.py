@@ -56,8 +56,11 @@ def news_sts_search():
     sentence = request.args.get('text')
     size = request.args.get('size')
     newscategoryid = request.args.get('newscategoryid')
-    tokenized = preprocess(sentence)[0]
-    vector = np.array(SentenceInference(tokenized)).tolist()
+    if sentence != None and sentence != '':
+        tokenized = preprocess(sentence)[0]
+        vector = np.array(SentenceInference(tokenized)).tolist()
+    else:
+        vector = None
     response = ES.News_STS_Search(vector, size, newscategoryid)['hits']['hits']
     for news in response:
         news['_source']['embedding'] = None
