@@ -1,8 +1,9 @@
+host = "http://192.168.1.100:5000"
 threshold = 0.0
 
 function GetNewsCategory() {
     $.ajax({
-        url: "http://trungddso.ddns.net:5000/api/v1/newscategory",
+        url: host+"/api/v1/newscategory",
         dataType: 'json',
         success: function (tuples) {
             tuples.forEach(element => {
@@ -25,13 +26,22 @@ function STS_Search() {
     size = $("#Size").val();
     params += '&size=' + size;
 
+    isTitle = $("#IsTitle").val();
+    params += '&isTitle=' + isTitle;
+
     newscategoryid = $("#Categories").val();
     params += '&newscategoryid=' + newscategoryid;
     setTimeout(() => {
         $.ajax({
-            url: "http://trungddso.ddns.net:5000/api/v1/news/search/sts" + params,
+            url: host+"/api/v1/news/search/sts" + params,
             dataType: 'json',
             success: function (news) {
+                if(news.length == 0){
+                    $("#Results").append('Không có kết quả phù hợp với yêu cầu tìm kiếm')
+                    $('.overlay').removeClass('d-flex');
+                    $("#es_logo").removeClass('d-flex');
+                    return;
+                }
                 count = 1
                 if (news[0]['_score'] < threshold + 1) {
                     $("#Results").append('Không có kết quả phù hợp với yêu cầu tìm kiếm')
@@ -58,14 +68,14 @@ function STS_Search() {
                             + '</div>'
                             + '</div>'
                             + '<div id="collps' + count + '" class="collapse" data-parent="#Results">'
-                            + '<div class="card-body">' + body + '</div>'
+                            + '<div class="card-body">' + "<b>" + element['_source']['abstract']+ "</b><br/>" + body + '</div>'
                             + '</div>'
                         );
                         count += 1;
                     }
                 });
                 $('.overlay').removeClass('d-flex');
-                $("#es_logo").removeClass('d-flex')
+                $("#es_logo").removeClass('d-flex');
             }
         });
     }, 500);

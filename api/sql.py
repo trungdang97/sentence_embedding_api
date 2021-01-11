@@ -2,6 +2,14 @@ import pyodbc
 from configparser import ConfigParser
 config = ConfigParser()
 config.read('config.ini')
+from enum import Enum
+
+class News_Fields(Enum):
+    NewsId = 0
+    Title = 1
+    Abstract = 2
+    Body = 3
+    NewsCategoryId = 4
 
 MSSQL = pyodbc.connect(
     UID=config.get('mssql','UID'),
@@ -18,7 +26,7 @@ def SQLRecordsCount():
         return row[0]
 
 def GetAllNews():
-    cursor.execute("select NewsId, Title, Body, NewsCategoryId from News")
+    cursor.execute("select NewsId, Title, Abstract, Body, NewsCategoryId from News")
     results = []
     for row in cursor:
         results.append(row)
@@ -33,6 +41,14 @@ def GetAllTitles():
 
 def GetAllCategories():
     cursor.execute("select NewsCategoryId, Name from NewsCategory")
+    results = []
+    for row in cursor:
+        results.append(row)
+    return results
+
+# testing
+def GetNewsByCategoryId(id):
+    cursor.execute("select NewsId, Title, Abstract, Body, NewsCategoryId from News where NewsCategoryId = '{0}'".format(id))
     results = []
     for row in cursor:
         results.append(row)

@@ -5,7 +5,10 @@ import pymongo
 import requests
 from vncorenlp import VnCoreNLP
 import uuid
+import time
 
+start_time = time.time()
+print("Opening connections...")
 MSSQL = pyodbc.connect(
     Trusted_Connection='No',
     UID='sa',
@@ -32,6 +35,7 @@ documents = list(client.collection.aggregate([
     {"$sample": {"size": 50000}}
 ]))
 
+print("Preparing data...")
 news_list = []
 for doc in documents:
     if len(doc['cates']) > 0:
@@ -39,7 +43,8 @@ for doc in documents:
     else:
         doc['cates'] = 'Uncategorized'
     doc['cates'] = next(item["id"] for item in categories if item["name"] == doc['cates'])
-    news_list.append({'id':doc['id'], 'title':doc['title'], 'body':doc['body'], 'cates':doc['cates']})
+    if doc['sapo'] != '' and doc['body'] != '':
+        news_list.append({'id':doc['id'], 'title':doc['title'], 'abstract':doc['sapo'], 'body':doc['body'], 'cates':doc['cates']})
 
 news_list = list({n['id']:n for n in news_list}.values())
 for i, news in enumerate(news_list):
@@ -47,7 +52,10 @@ for i, news in enumerate(news_list):
 
 tuples = [tuple(d.values()) for d in news_list]
 
-cmd = "insert into News(NewsId, Title, Body, NewsCategoryId) VALUES(?,?,?,?)"
+print("Inserting data...")
+cmd = "insert into News(NewsId, Title, Abstract, Body, NewsCategoryId) VALUES(?,?,?,?,?)"
 cursor.executemany(cmd, tuples)
 MSSQL.commit()
 MSSQL.close()
+end_time = time.time()
+print("Done in {0} seconds.".format(end_time-start_time))

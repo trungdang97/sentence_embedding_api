@@ -2,7 +2,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Dịch vụ hỗ trợ tìm kiếm theo ngữ nghĩa</title>
+    <title>Hệ thống hỗ trợ tìm kiếm theo ngữ nghĩa</title>
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
 
@@ -52,14 +52,14 @@
     <div class='container-fluid'>
         <div class='row'>
             <div class='col-sm-12 text-center'>
-                <h2>Dịch vụ hỗ trợ tìm kiếm theo ngữ nghĩa</h2>
+                <h2>Hệ thống hỗ trợ tìm kiếm theo ngữ nghĩa</h2>
             </div>
         </div>
         <div class='row'>
             <div class="form-group col-sm-12">
                 <input type="text" class="form-control" id="Query" placeholder="Nhập chuỗi tìm kiếm tại đây...">
             </div>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-sm-3">
                 <div class="form-group">
                     <select class="form-control" id="Size">
                         <option value=5>Top 5 kết quả</option>
@@ -69,14 +69,22 @@
                     </select>
                 </div>
             </div>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-sm-3">
                 <div class="form-group">
                     <select class="form-control" id='Categories'>
                         <option selected value=''>Tất cả loại tin</option>
                     </select>
                 </div>
             </div>
-            <div class="form-group col-sm-4">
+            <div class="form-group col-sm-3">
+                <div class="form-group">
+                    <select class="form-control" id='IsTitle'>
+                        <option selected value='1'>Theo tiêu đề</option>
+                        <option value='0'>Theo tóm tắt</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group col-sm-3">
                 <button class='btn btn-primary' style="width: 100%;" type="button" onclick="STS_Search()">Tìm
                     kiếm</button>
             </div>

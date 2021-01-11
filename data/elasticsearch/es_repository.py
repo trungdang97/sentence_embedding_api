@@ -18,26 +18,7 @@ class NLPModel(Enum):
     PHOBERT = 2
 
 
-class NewsTitle:
-    # cấu trúc dữ liệu được đánh chỉ mục vào Elasticsearch
-    mappings = {
-        "mappings": {
-            "properties": {
-                "sentence": {
-                    "type": "text",
-                    "analyzer": "vi_analyzer"
-                },
-                "pv_dm": {
-                    "type": "dense_vector",
-                    "dims": config.get("embedding_model", "dimensions")
-                }
-            }
-        }
-    }
-
-
 class News:
-    # cấu trúc dữ liệu được đánh chỉ mục vào Elasticsearch
     mappings = {
         "mappings": {
             "properties": {
@@ -45,14 +26,21 @@ class News:
                     "type": "text",
                     "analyzer": "vi_analyzer"
                 },
+                "abstract": {
+                    "type": "text",
+                    "analyzer": "vi_analyzer"
+                },
                 "body": {
                     "type": "text",
-                    # "analyzer": "vi_analyzer"
                 },
                 "newscategoryid": {
                     "type": "text",
                 },
-                "embedding": {
+                "title_embedding": {
+                    "type": "dense_vector",
+                    "dims": config.get("embedding_model", "dimensions")
+                },
+                "abstract_embedding": {
                     "type": "dense_vector",
                     "dims": config.get("embedding_model", "dimensions")
                 }
@@ -76,7 +64,7 @@ class ES_Repository:
         # create connection to hosts/nodes
         self.hosts = [host.strip() for host in config.get(
             "elasticsearch", "hosts").split('|')]
-        self.client = Elasticsearch(self.hosts)
+        self.client = Elasticsearch(self.hosts, timeout=30)
         # kiểm tra kết nối
         if not self.client.ping():
             logging.error(
@@ -95,8 +83,15 @@ class ES_Repository:
     def Ping(self):
         return self.client.ping()
 
-    # bootstrapping index if it doesn't exist
+    # bootstrapping index if it doesn't exist  
     def __bootstrap_index(self, index_name=None, mappings=None):
+        """
+        Parameters
+        ----------
+        index_name : tên của chỉ mục lưu trữ.
+        mappings : cấu trúc dữ liệu của chỉ mục lưu trữ
+
+        """
         if index_name == None or mappings == None:
             raise Exception("Bootstrap index or mappings must not be null")
             return
@@ -111,7 +106,7 @@ class ES_Repository:
         else:
             logging.info("Index '{0}': READY.".format(index_name))
 
-    # get document by _id
+    # Phương thức lấy một văn bản được đánh chỉ mục theo id - mã định danh
     def GetById(self, index_name=None, id=None):
         if index_name == None or id == None:
             raise Exception("Document id and index name cannot be null")
@@ -119,42 +114,44 @@ class ES_Repository:
         response = self.client.get(index=index_name, id=id)
         return response["_source"]
 
-    # index ONE document
+    # Phương thức thêm hoặc cập nhật (nếu được cung cấp id trùng với id đã có) một văn bản
     def Index(self, index_name=None, body=None, id=None):
         if index_name == None or body == None or id == None:
             raise Exception("Document id, body and index name cannot be null")
         response = self.client.index(index=index_name, body=body, id=id)
         return response
 
-    # delete ONE document
+    # Phương thức xóa một văn bản thông qua id
     def Delete(self, index_name=None, id=None):
         if index_name == None or id == None:
             raise Exception("Document id and index name cannot be null")
         response = self.client.delete(index=index_name, id=id)
         return response
 
-    # bulk indexing
+    # Phương thức thực hiện một chuỗi các lệnh - Bulk Indexing
     def BulkIndex(self, index_name=None, body=None):
         if index_name == None or body == None:
             raise Exception("Body and index name cannot be null")
         response = self.client.bulk(body, index_name)
         return response
 
-    # compare SQL records quantity and Elasticsearch's
-    def CheckNewsQuantities(self, index_name):
+    # Phương thức kiểm tra số lượng bản ghi của cả SQL
+    def CheckNewsQuantities(self):
         sql_quantity = SQLRecordsCount()
-        es_quantity = self.client.count(index=index_name)['count']
+        es_quantity = self.client.count(index=type(
+            News()).__name__.lower())['count']
         return (sql_quantity, es_quantity)
 
-    # check if need to be sync
-    def IsNewsDataEqual(self, index_name):
-        quantities = self.CheckNewsQuantities(index_name)
+    # Kiểm tra nếu dữ liệu chênh nhau
+    def IsNewsDataEqual(self):
+        quantities = self.CheckNewsQuantities()
         if quantities[0] == quantities[1]:
             return True
         return False
 
     # STS search
-    def News_STS_Search(self, query_vector, size=10, newscategoryid=None):
+    def News_STS_Search(self, query_vector, size=10, newscategoryid=None, isTitle=True):
+        query_field = "title_embedding" if isTitle else "abstract_embedding"
         if newscategoryid == None or newscategoryid == '':
             query = {
                 "match_all": {}
@@ -171,7 +168,7 @@ class ES_Repository:
                 "script_score": {
                     "query": query,
                     "script": {
-                        "source": "cosineSimilarity(params.query_vector, doc['embedding']) + 1.0",
+                        "source": "cosineSimilarity(params.query_vector, doc['{0}']) + 1.0".format(query_field),
                         "params": {"query_vector": query_vector}
                     }
                 }
@@ -183,9 +180,10 @@ class ES_Repository:
                 "size": size,
                 "query": {
                     "function_score": {
+                        "query": query,
                         "functions": [{
                             "random_score": {
-                                "seed": "1518707649"
+                                
                             }
                         }]
                     }
