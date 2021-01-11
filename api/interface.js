@@ -1,4 +1,4 @@
-host = "http://192.168.1.100:5000"
+host = "http://trungddso.ddns.net:5000"
 threshold = 0.0
 
 function GetNewsCategory() {
