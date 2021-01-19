@@ -1,4 +1,4 @@
-from data.elasticsearch.es_repository import ES_Repository, News
+from es_repository import ES_Repository, News, NewsTest
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 from fse.models import SIF
@@ -7,7 +7,7 @@ import logging
 import time
 import numpy as np
 from configparser import ConfigParser
-from api.sql import News_Fields, GetAllNews, GetAllCategories, GetNewsByCategoryId
+from sql import News_Fields, GetAllNews, GetAllCategories, GetNewsByCategoryId
 logger = logging.getLogger()
 logging.basicConfig(format='%(asctime)s : %(threadName)s : %(levelname)s : %(message)s', level=logging.WARNING)
 # logging.getLogger("SIF").setLevel(logging.WARNING)
@@ -20,7 +20,11 @@ ES = ES_Repository()
 
 EMERGE_DEBUG = True if int(config.get("emerge","debug"))==1 else False
 ###########################################################################
-sif_model = 'data/word2vec/models/fse/corpus-title-100d.model'.format(100)
+sif_model = 'data/word2vec/models/fse/corpus-title-100d.500ksample.model'.format(100)
+if "sample" in sif_model:
+    index = type(NewsTest()).__name__.lower()
+else:
+    index = type(News()).__name__.lower()
 sif = SIF.load(sif_model)
 def SentenceInference(sentence):
     vector = sif.infer([(sentence, 0)])
@@ -61,6 +65,23 @@ def start():
     app.run(host=host, port=port,use_reloader=False)
 
 # TEST METHOD GOES HERE
+@app.route('/api/v1/news/index', methods=['POST'])
+def news_index():
+    body = request.get_json()
+    title = preprocess(body['title'])
+    abstract = preprocess(body['abstract'])
+    title_embedding = np.array(SentenceInference(title[0])).tolist()
+    abstract_embedding = np.array(AbstractInference(abstract)).tolist()
+    body['title_embedding'] = title_embedding
+    body['abstract_embedding'] = abstract_embedding
+    response = ES.Index(index_name=index,body=body,id=id)
+    return jsonify(response)
+@app.route('/api/v1/news/delete', methods=['DELETE'])
+def news_delete():
+    id = request.args.get('id')
+    response = ES.Delete(index_name=index, id=id)
+    return jsonify(response)
+
 @app.route('/api/v1/newscategory', methods=['GET'])
 def get_newscategory():
     cates = GetAllCategories()
@@ -74,7 +95,10 @@ def news_sts_search():
     size = request.args.get('size')
     newscategoryid = request.args.get('newscategoryid')
     isTitle = request.args.get('isTitle')
-    isTitle = True if int(isTitle) == 1 else False
+    if isTitle != '':
+        isTitle = True if int(isTitle) == 1 else False
+    else:
+        isTitle = None
     if sentence != None and sentence != '':
         tokenized = preprocess(sentence)[0]
         vector = np.array(SentenceInference(tokenized)).tolist()
@@ -82,8 +106,12 @@ def news_sts_search():
         vector = None
     if EMERGE_DEBUG:
         print(vector)
-    response = ES.News_STS_Search(vector, size, 
-                newscategoryid, isTitle)['hits']['hits']
+    global index
+    response = ES.News_STS_Search(index, vector, size, newscategoryid, isTitle)
+    if response == None:
+        return jsonify(None)
+    else:
+        response = response['hits']['hits']
     print('')
     for news in response:
         news['_source']['title_embedding'] = None
@@ -106,6 +134,7 @@ def news_sync():
     print("Syncing {0} batch(es) of {1} at maximum".format(math.ceil(len(data)/batch), batch))
     body = []
     start_time = time.time()
+    global index
     for i, news in enumerate(data):
         title = preprocess(news[News_Fields.Title.value])
         abstract = preprocess(news[News_Fields.Abstract.value])
@@ -113,7 +142,7 @@ def news_sync():
         abstract_embedding = np.array(AbstractInference(abstract)).tolist()
         body.append({
             "index":{
-                "_index": type(News()).__name__.lower(),
+                "_index": index,
                 "_id": news[News_Fields.NewsId.value]
             }
         })
@@ -148,7 +177,7 @@ def data_quantities():
     }
     return jsonify(result)
 
-# testing
+# TESTING
 @app.route('/', methods=['GET'])
 def ping():
     return app.send_static_file('api/interface.html')
@@ -199,3 +228,5 @@ def fix_failed_docs():
     response['items']=len(response['items'])
     # SYNC_LOCK.release()
     return jsonify("Finish syncing")
+
+app.run(host=host, port=port,use_reloader=False)
